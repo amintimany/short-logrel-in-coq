@@ -6,5 +6,8 @@
 -arg -w -arg -redundant-canonical-projection
 
 theories/prelude.v
+theories/language.v
 
-theories/stlc_safe.v
+theories/stlc_cbv.v
+theories/stlc_cbv_safety.v
+theories/stlc_cbv_normalization.v
