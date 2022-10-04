@@ -11,3 +11,7 @@ theories/language.v
 theories/stlc_cbv.v
 theories/stlc_cbv_safety.v
 theories/stlc_cbv_normalization.v
+
+theories/systemF_cbv.v
+theories/systemF_cbv_safety.v
+theories/systemF_cbv_normalization.v

@@ -2,6 +2,7 @@ From Coq.Unicode Require Import Utf8.
 From Coq.Lists Require Import List.
 From Autosubst Require Import Autosubst.
 From Coq.Relations Require Import Relations.
+From Coq.micromega Require Import Lia.
 
 Section autosubst.
   Context {expr} `{!Ids expr, !Rename expr, !Subst expr, !SubstLemmas expr}.
@@ -21,6 +22,13 @@ Section autosubst.
     - intros Hxenv; rewrite nth_error_nth' with (d := ids 0); [eauto|assumption].
   Qed.
 
+  Lemma lookup_app_l env1 env2 x : x < length env1 → lookup (env1 ++ env2) x = lookup env1 x.
+  Proof. apply nth_error_app1. Qed.
+
+  Lemma lookup_app_r env1 env2 x :
+    length env1 ≤ x → lookup (env1 ++ env2) x = lookup env2 (x - length env1).
+  Proof. apply nth_error_app2. Qed.
+
   Fixpoint env_subst (env : environment) : var → expr :=
     match env with
     | nil => ids
@@ -33,6 +41,40 @@ Section autosubst.
     induction env as [|g env IHenv]; intros e x Hxe.
     - rewrite lookup_nil in Hxe; congruence.
     - destruct x; simpl in *; [congruence|auto; fail].
+  Qed.
+
+  Definition weaken (n m : nat) (e : expr) := e.[upn n (ren (+ m))].
+
+  Lemma weaken_var n m x : weaken n m (ids x) = ids (if Nat.ltb x n then x else x + m).
+  Proof.
+    unfold weaken.
+    asimpl.
+    revert n m.
+    induction x as [|x IHx]; intros n m.
+    - destruct n; asimpl; trivial.
+    - asimpl.
+      destruct n as [|n]; asimpl; [f_equal; lia|].
+      destruct n as [|n]; asimpl; [f_equal; lia|].
+      rewrite IHx; asimpl.
+      destruct Nat.leb; trivial.
+  Qed.
+
+  Lemma weaken_0 n : weaken 0 n = rename (+n).
+  Proof.
+    apply FunctionalExtensionality.functional_extensionality.
+    unfold weaken. asimpl; trivial.
+  Qed.
+
+  Lemma upn_ext n f x : upn n f x = if Nat.ltb x n then ids x else (f (x - n)).[ren (+n)].
+  Proof.
+    revert x f. induction n as [|n IHn]; intros x f.
+    + asimpl. rewrite PeanoNat.Nat.sub_0_r; trivial.
+    + destruct x; [asimpl; reflexivity|].
+      asimpl.
+      rewrite IHn.
+      destruct n; asimpl; [reflexivity|].
+      destruct Nat.leb; [asimpl; reflexivity|].
+      asimpl; trivial.
   Qed.
 
 End autosubst.
@@ -73,5 +115,19 @@ Section env_rel.
 
   Lemma env_rel_cons a env b env' : P a b → env_rel env env' → env_rel (a :: env) (b :: env').
   Proof. apply Forall2_cons; trivial. Qed.
+
+  Lemma env_rel_inv_nil_l env : env_rel nil env → env = nil.
+  Proof. inversion 1; trivial. Qed.
+
+  Lemma env_rel_inv_nil_r env : env_rel env nil → env = nil.
+  Proof. inversion 1; trivial. Qed.
+
+  Lemma env_rel_inv_cons_l x env env' :
+    env_rel (x :: env) env' → ∃ y env'', env' = y :: env'' ∧ P x y ∧ env_rel env env''.
+  Proof. inversion 1; eauto. Qed.
+
+  Lemma env_rel_inv_cons_r env x env' :
+    env_rel env (x :: env') → ∃ y env'', env = y :: env'' ∧ P y x ∧ env_rel env'' env'.
+  Proof. inversion 1; eauto. Qed.
 
 End env_rel.
