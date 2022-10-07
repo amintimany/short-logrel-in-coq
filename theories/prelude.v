@@ -110,6 +110,30 @@ Section env_rel.
       simplify_eq 1; intros ?; subst; eauto.
   Qed.
 
+  Lemma env_rel_lookup1_None env1 env2 x :
+    env_rel env1 env2 → lookup env1 x = None → lookup env2 x = None.
+  Proof.
+    intros Her.
+    revert x.
+    induction Her.
+    - intros ??; rewrite lookup_nil; congruence.
+    - intros z Hz.
+      destruct z; simpl; [|eauto; fail].
+      inversion Hz.
+  Qed.
+
+  Lemma env_rel_lookup2_None env1 env2 x :
+    env_rel env1 env2 → lookup env2 x = None → lookup env1 x = None.
+  Proof.
+    intros Her.
+    revert x.
+    induction Her.
+    - intros ??; rewrite lookup_nil; congruence.
+    - intros z Hz.
+      destruct z; simpl; [|eauto; fail].
+      inversion Hz.
+  Qed.
+
   Lemma env_rel_nil : env_rel nil nil.
   Proof. apply Forall2_nil. Qed.
 
@@ -131,3 +155,41 @@ Section env_rel.
   Proof. inversion 1; eauto. Qed.
 
 End env_rel.
+
+Section env_rel.
+  Context {A} (P : A → A → Prop).
+
+  Lemma env_rel_refl env : (∀ x, P x x) → env_rel P env env.
+  Proof. intros HP; induction env; [apply env_rel_nil|apply env_rel_cons; auto]. Qed.
+
+  Lemma env_rel_sym env env' : (∀ x y, P x y → P y x) → env_rel P env env' → env_rel P env' env.
+  Proof.
+    intros HP; revert env'; induction env as [|x env IHenv]; intros env' Hee.
+    - apply env_rel_inv_nil_l in Hee as ->; apply env_rel_nil.
+    - apply env_rel_inv_cons_l in Hee as (?&?&->&?&?).
+      apply env_rel_cons; auto.
+  Qed.
+
+  Lemma env_rel_trans env env' env'' :
+    (∀ x y z, P x y → P y z → P x z) →
+    env_rel P env env' → env_rel P env' env'' → env_rel P env env''.
+  Proof.
+    intros HP; revert env' env''; induction env as [|x env IHenv]; intros env' env'' Hee' He'e''.
+    - apply env_rel_inv_nil_l in Hee' as ->.
+      apply env_rel_inv_nil_l in He'e'' as ->.
+      apply env_rel_nil.
+    - apply env_rel_inv_cons_l in Hee' as (?&?&->&?&?).
+      apply env_rel_inv_cons_l in He'e'' as (?&?&->&?&?).
+      apply env_rel_cons; eauto.
+  Qed.
+
+End env_rel.
+
+Lemma env_rel_impl {A B} (P Q : A → B → Prop) env env' :
+  (∀ x y, P x y → Q x y) → env_rel P env env' → env_rel Q env env'.
+Proof.
+  intros HP; revert env'; induction env as [|x env IHenv]; intros env' Hee.
+  - apply env_rel_inv_nil_l in Hee as ->; apply env_rel_nil.
+  - apply env_rel_inv_cons_l in Hee as (?&?&->&?&?).
+    apply env_rel_cons; auto.
+Qed.

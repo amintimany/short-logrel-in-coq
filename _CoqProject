@@ -15,3 +15,6 @@ theories/stlc_cbv_normalization.v
 theories/systemF_cbv.v
 theories/systemF_cbv_safety.v
 theories/systemF_cbv_normalization.v
+
+theories/systemF_rec_cbv.v
+theories/systemF_rec_cbv_safety.v

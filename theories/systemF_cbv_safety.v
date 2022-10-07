@@ -5,17 +5,16 @@ From Coq.Relations Require Import Relations.
 From Coq.micromega Require Import Lia.
 From ShortLogrels Require Import prelude language systemF_cbv.
 
-
 Definition rel_in_env (Δ : environment (expr → Prop)) (X : var) (v : expr) : Prop :=
   is_val v ∧ match lookup Δ X with Some P => P v | None => True end.
 
 Fixpoint val_rel (Δ : environment (expr → Prop)) (τ : type) (v : expr) : Prop :=
   match τ with
-  |TUnit => v = TT
-  |TVar X => rel_in_env Δ X v
-  |TProd τ1 τ2 => ∃ v1 v2, v = Pair v1 v2 ∧ val_rel Δ τ1 v1 ∧ val_rel Δ τ2 v2
-  |TFun τ1 τ2 => is_val v ∧ ∀ w, val_rel Δ τ1 w → Safe (val_rel Δ τ2) (App v w)
-  |TForAll τ => is_val v ∧ ∀ P, Safe (val_rel (P :: Δ) τ) (TApp v)
+  | TUnit => v = TT
+  | TVar X => rel_in_env Δ X v
+  | TProd τ1 τ2 => ∃ v1 v2, v = Pair v1 v2 ∧ val_rel Δ τ1 v1 ∧ val_rel Δ τ2 v2
+  | TFun τ1 τ2 => is_val v ∧ ∀ w, val_rel Δ τ1 w → Safe (val_rel Δ τ2) (App v w)
+  | TForAll τ => is_val v ∧ ∀ P, Safe (val_rel (P :: Δ) τ) (TApp v)
   end.
 
 Definition expr_rel (Δ : environment (expr → Prop)) (τ : type) (e : expr) :=
