@@ -24,9 +24,11 @@ Proof.
   eapply sipred_down_closed; [|eassumption]; lia.
 Qed.
 
-Program Definition SIPred_true : SIPred := {| sipred _ e := is_val e |}.
+Program Definition SIPred_const (P : expr → Prop) : SIPred := {| sipred _ e := is_val e ∧ P e |}.
+Next Obligation. firstorder. Qed.
 Next Obligation. trivial. Qed.
-Next Obligation. trivial. Qed.
+
+Program Definition SIPred_true : SIPred := SIPred_const (λ _, True).
 
 Definition SIPred_dist (P1 P2 : SIPred) (n : nat) : Prop := ∀ k e, k < n → P1 k e ↔ P2 k e.
 
@@ -591,4 +593,37 @@ Proof.
   eapply SISafe_mono; [tauto|].
   replace e with e.[env_subst nil] by (asimpl; reflexivity).
   eapply (Fundamental nil _ _ Htp _ nil); apply env_rel_nil.
+Qed.
+
+(*** Theorems for free *)
+
+Lemma theorem_for_free_identity e :
+  typed nil e (TForAll (TFun (TVar 0) (TVar 0))) →
+  ∀ v, is_val v → Safe (λ w, w = v) (App (TApp e) v).
+Proof.
+  intros Htp v Hiv.
+  apply SISafe_adequacy; intros n.
+  pose proof (Fundamental _ _ _ Htp n nil nil) as He.
+  asimpl in He.
+  eapply (SISafe_bind _ _ _ (λ e, App (TApp e) _)); [repeat constructor; fail| |].
+  { apply He. apply env_rel_nil. }
+  clear He.
+  intros ? w ? Hiw [? Hw].
+  eapply (SISafe_bind _ _ _ (λ e, App e _)); [repeat constructor; fail| |].
+  { apply (Hw (SIPred_const (λ w, v = w))). }
+  intros ? u ? Hiu [? Hu].
+  eapply SISafe_mono; [|apply Hu]; [cbv; firstorder|lia|cbv; tauto].
+Qed.
+
+Lemma theorem_for_free_empty e :
+  typed nil e (TForAll (TVar 0)) → Safe (λ _, False) (TApp e).
+Proof.
+  intros Htp.
+  apply SISafe_adequacy; intros n.
+  pose proof (Fundamental _ _ _ Htp n nil nil) as He.
+  asimpl in *.
+  eapply (SISafe_bind _ _ _ (λ e, (TApp e))); [repeat constructor; fail| |].
+  { apply He. apply env_rel_nil. }
+  intros ? w ? Hiw [? Hw].
+  eapply SISafe_mono; [|apply (Hw (SIPred_const (λ _, False)))]; cbv; tauto.
 Qed.

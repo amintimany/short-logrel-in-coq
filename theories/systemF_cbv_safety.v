@@ -209,3 +209,33 @@ Proof.
   replace e with e.[env_subst nil] by (asimpl; reflexivity).
   eapply (Fundamental nil _ _ Htp nil); apply env_rel_nil.
 Qed.
+
+(*** Theorems for free *)
+
+Lemma theorem_for_free_identity e :
+  typed nil e (TForAll (TFun (TVar 0) (TVar 0))) →
+  ∀ v, is_val v → Safe (λ w, w = v) (App (TApp e) v).
+Proof.
+  intros Htp v Hiv.
+  pose proof (Fundamental _ _ _ Htp nil nil) as He.
+  asimpl in *.
+  eapply (Safe_bind _ _ _ (λ e, App (TApp e) _)); [repeat constructor; fail| |].
+  { apply He. apply env_rel_nil. }
+  intros w Hiw [? Hw].
+  eapply (Safe_bind _ _ _ (λ e, App e _)); [repeat constructor; fail| |].
+  { apply (Hw (λ w, w = v)). }
+  intros u Hiu [? Hu].
+  eapply Safe_mono; [|apply Hu]; cbv; tauto.
+Qed.
+
+Lemma theorem_for_free_empty e :
+  typed nil e (TForAll (TVar 0)) → Safe (λ _, False) (TApp e).
+Proof.
+  intros Htp.
+  pose proof (Fundamental _ _ _ Htp nil nil) as He.
+  asimpl in *.
+  eapply (Safe_bind _ _ _ (λ e, (TApp e))); [repeat constructor; fail| |].
+  { apply He. apply env_rel_nil. }
+  intros w Hiw [? Hw].
+  eapply Safe_mono; [|apply (Hw (λ _, False))]; cbv; tauto.
+Qed.
