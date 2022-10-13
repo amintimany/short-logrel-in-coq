@@ -193,3 +193,12 @@ Proof.
   - apply env_rel_inv_cons_l in Hee as (?&?&->&?&?).
     apply env_rel_cons; auto.
 Qed.
+
+Lemma lookup_map {A B} (f : A → B) env x a :
+  lookup env x = Some a → lookup (map f env) x = Some (f a).
+Proof.
+  revert x; induction env as [|b env IHenv].
+  - simpl; intros ?; rewrite lookup_nil; congruence.
+  - intros []; [simpl; inversion 1; subst; reflexivity|].
+    simpl; apply IHenv.
+Qed.

@@ -339,6 +339,25 @@ Section language.
     left; split; [tauto|apply HPQ; [lia|tauto]].
   Qed.
 
+  Lemma SISafe_down_closed (P : nat → expr → Prop) n n' e :
+    n' ≤ n → (∀ k k' e, k' ≤ k → k ≤ n → P k e → P k' e) → SISafe P n e → SISafe P n' e.
+  Proof.
+    intros Hle HP Hne z e' Hz Hnstps.
+    destruct (λ Hle, Hne z e' Hle Hnstps) as [[? ?]|]; [lia| |right; assumption].
+    left; split; [assumption|].
+    eapply HP; [| |eassumption]; [lia|lia].
+  Qed.
+
+  Lemma SISafe_down_closed' (P : nat → expr → Prop) n n' e :
+    ¬ is_val e → n' ≤ n → (∀ k k' e, k' ≤ k → k < n → P k e → P k' e) → SISafe P n e → SISafe P n' e.
+  Proof.
+    intros Hniv Hle HP Hne z e' Hz Hnstps.
+    destruct (λ Hle, Hne z e' Hle Hnstps) as [[? ?]|]; [lia| |right; assumption].
+    inversion Hnstps; subst; [tauto|].
+    left; split; [assumption|].
+    eapply HP; [| |eassumption]; [lia|lia].
+  Qed.
+
   Lemma SISafe_val (P : nat → expr → Prop) n e : is_val e → P n e → SISafe P n e.
   Proof.
     intros He HPe k e' Hk Hstp.

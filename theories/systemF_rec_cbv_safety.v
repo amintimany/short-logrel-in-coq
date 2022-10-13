@@ -18,10 +18,9 @@ Definition expr_rel (P : SIPred) := SISafe P.
 
 Lemma expr_rel_down_closed P n n' e : n' ≤ n → expr_rel P n e → expr_rel P n' e.
 Proof.
-  intros ? Hn ??? Hstps.
-  apply Hn in Hstps as [[]|]; [|right; assumption|lia].
-  left; split; [assumption|].
-  eapply sipred_down_closed; [|eassumption]; lia.
+  intros ? Hn.
+  eapply SISafe_down_closed; [eassumption| |eassumption].
+  intros; eapply sipred_down_closed; [|eassumption]; lia.
 Qed.
 
 Program Definition SIPred_const (P : expr → Prop) : SIPred := {| sipred _ e := is_val e ∧ P e |}.
